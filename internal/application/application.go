@@ -71,11 +71,11 @@ func (a *API) Run(ctx context.Context) error {
 		host = "localhost"
 	}
 	base := "http://" + host + ":" + a.cfg.HTTPPort
-	log.Printf("streaming-service HTTP listening on %s", addr)
-	log.Printf("  Health:   %s/health", base)
-	log.Printf("  Ready:    %s/ready", base)
-	log.Printf("  Sessions: %s/sessions", base)
-	log.Printf("  WebSocket: %s/ws/stream/:session_id/:user_id", base)
+	log.Printf("HTTP server listening on %s", addr)
+	log.Printf("  Health:        %s/health", base)
+	log.Printf("  Ready:         %s/ready", base)
+	log.Printf("  Sessions:      %s/sessions", base)
+	log.Printf("  WebSocket:     ws://%s:%s/ws/stream/:session_id/:user_id", host, a.cfg.HTTPPort)
 
 	go func() {
 		if err := a.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
