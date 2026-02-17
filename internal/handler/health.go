@@ -24,7 +24,7 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	})
 }
 
-// Ready responds to GET /ready (for k8s readiness).
+// Ready responds to GET /ready (for k8s readiness). Формат {"status": "ready"} для единообразия с остальными сервисами.
 func (h *HealthHandler) Ready(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"ready": true})
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }

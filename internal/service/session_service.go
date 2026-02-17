@@ -11,15 +11,29 @@ import (
 	"gorm.io/gorm"
 )
 
+// SessionCloser — интерфейс для закрытия сессии в hub (D: SessionService не зависит от *StreamHub).
+type SessionCloser interface {
+	CloseSession(sessionID string)
+}
+
+// SessionServicer — интерфейс для handlers (D: зависимость от абстракции).
+type SessionServicer interface {
+	Create(clientID string) (*model.Session, error)
+	Get(sessionID string) (*model.Session, error)
+	Finish(sessionID string) error
+	AddOperator(sessionID, userID string) error
+	GetOperators(sessionID string) ([]model.Operator, error)
+}
+
 // SessionService manages streaming session lifecycle.
 type SessionService struct {
 	db     *gorm.DB
 	cfg    *config.Config
-	stream *StreamHub
+	stream SessionCloser
 }
 
 // NewSessionService creates a session service.
-func NewSessionService(db *gorm.DB, cfg *config.Config, hub *StreamHub) *SessionService {
+func NewSessionService(db *gorm.DB, cfg *config.Config, hub SessionCloser) *SessionService {
 	return &SessionService{db: db, cfg: cfg, stream: hub}
 }
 

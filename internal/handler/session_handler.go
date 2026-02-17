@@ -12,7 +12,7 @@ import (
 
 // SessionHandler handles REST API for sessions.
 type SessionHandler struct {
-	svc *service.SessionService
+	svc service.SessionServicer
 	cfg *service.WSConfig
 }
 
@@ -21,8 +21,8 @@ type WSConfig struct {
 	BaseURL string
 }
 
-// NewSessionHandler creates a session handler.
-func NewSessionHandler(svc *service.SessionService, wsBaseURL string) *SessionHandler {
+// NewSessionHandler creates a session handler (D: принимает SessionServicer).
+func NewSessionHandler(svc service.SessionServicer, wsBaseURL string) *SessionHandler {
 	return &SessionHandler{
 		svc: svc,
 		cfg: &service.WSConfig{BaseURL: wsBaseURL},

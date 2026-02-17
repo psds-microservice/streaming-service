@@ -12,13 +12,13 @@ import (
 
 // StreamWSHandler handles WebSocket connections for /ws/stream/:session_id/:user_id.
 type StreamWSHandler struct {
-	hub    *service.StreamHub
-	sess   *service.SessionService
+	hub    service.StreamHubForHandler
+	sess   service.SessionServicer
 	logger *zap.Logger
 }
 
-// NewStreamWSHandler creates the WebSocket stream handler.
-func NewStreamWSHandler(hub *service.StreamHub, sess *service.SessionService, logger *zap.Logger) *StreamWSHandler {
+// NewStreamWSHandler creates the WebSocket stream handler (D: принимает интерфейсы hub и session).
+func NewStreamWSHandler(hub service.StreamHubForHandler, sess service.SessionServicer, logger *zap.Logger) *StreamWSHandler {
 	return &StreamWSHandler{hub: hub, sess: sess, logger: logger}
 }
 

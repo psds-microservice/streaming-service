@@ -25,6 +25,13 @@ type Peer struct {
 	Send      chan []byte
 }
 
+// StreamHubForHandler — интерфейс для WebSocket handler (D: зависимость от абстракции).
+type StreamHubForHandler interface {
+	Register(sessionID, userID string, role PeerRole, conn *websocket.Conn) (*Peer, func())
+	Upgrader() *websocket.Upgrader
+	RelayToOperators(sessionID string, messageType int, data []byte)
+}
+
 // StreamHub manages WebSocket connections and relays media per session.
 type StreamHub struct {
 	mu         sync.RWMutex
