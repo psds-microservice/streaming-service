@@ -124,6 +124,9 @@ func (s *SessionService) GetOperators(sessionID string) ([]model.Operator, error
 		}
 		return nil, err
 	}
+	if ent.Status == string(model.SessionStatusFinished) {
+		return nil, errs.ErrSessionNotFound
+	}
 	out := make([]model.Operator, 0, len(ent.Operators))
 	for _, o := range ent.Operators {
 		out = append(out, model.Operator{UserID: o.UserID, ConnectedAt: o.ConnectedAt})

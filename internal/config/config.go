@@ -38,6 +38,11 @@ type Config struct {
 
 	// WebSocket URL returned in CreateSession (e.g. wss://stream.example.com)
 	WSBaseURL string
+
+	// Recording: copy stream to recording-service, then set URL in session-manager
+	EnableRecording        bool   // ENABLE_RECORDING
+	RecordingServiceAddr   string // RECORDING_SERVICE_ADDR (gRPC, e.g. localhost:8096)
+	SessionManagerGRPCAddr string // SESSION_MANAGER_GRPC_ADDR (e.g. localhost:8091)
 }
 
 // Load loads config from environment (.env if present).
@@ -68,6 +73,9 @@ func Load() (*Config, error) {
 	cfg.DB.Password = getEnv("DB_PASSWORD", "postgres")
 	cfg.DB.Database = getEnv("DB_DATABASE", "streaming_service")
 	cfg.DB.SSLMode = getEnv("DB_SSLMODE", "disable")
+	cfg.EnableRecording = getEnv("ENABLE_RECORDING", "false") == "true" || getEnv("ENABLE_RECORDING", "false") == "1"
+	cfg.RecordingServiceAddr = getEnv("RECORDING_SERVICE_ADDR", "localhost:8096")
+	cfg.SessionManagerGRPCAddr = getEnv("SESSION_MANAGER_GRPC_ADDR", "localhost:9091")
 	return cfg, nil
 }
 

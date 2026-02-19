@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 
@@ -25,6 +26,12 @@ type Peer struct {
 	Send      chan []byte
 }
 
+// StreamRecorder receives a copy of the client stream for recording (optional).
+type StreamRecorder interface {
+	WriteChunk(ctx context.Context, sessionID string, data []byte)
+	EndSession(ctx context.Context, sessionID string)
+}
+
 // StreamHubForHandler — интерфейс для WebSocket handler (D: зависимость от абстракции).
 type StreamHubForHandler interface {
 	Register(sessionID, userID string, role PeerRole, conn *websocket.Conn) (*Peer, func())
@@ -39,7 +46,15 @@ type StreamHub struct {
 	upgrader   websocket.Upgrader
 	maxMsgSize int64
 	log        *zap.Logger
+	recorder   StreamRecorder  // optional: copy of client stream to recording-service
+	ctx        context.Context // app context for recording (shutdown propagation)
 }
+
+// SetRecorder sets the optional recorder for copying client stream to recording-service.
+func (h *StreamHub) SetRecorder(r StreamRecorder) { h.recorder = r }
+
+// SetContext sets the app context for recording (for shutdown propagation).
+func (h *StreamHub) SetContext(ctx context.Context) { h.ctx = ctx }
 
 // NewStreamHub creates a new stream hub.
 func NewStreamHub(maxMessageSize int64, log *zap.Logger) *StreamHub {
@@ -127,6 +142,13 @@ func (h *StreamHub) RelayToOperators(sessionID string, messageType int, data []b
 			h.log.Warn("operator send buffer full", zap.String("user_id", p.UserID))
 		}
 	}
+	if h.recorder != nil && len(data) > 0 {
+		ctx := h.ctx
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		h.recorder.WriteChunk(ctx, sessionID, data)
+	}
 }
 
 // CloseSession closes all connections in the session and removes them.
@@ -140,6 +162,13 @@ func (h *StreamHub) CloseSession(sessionID string) {
 	delete(h.peers, sessionID)
 	h.mu.Unlock()
 
+	if h.recorder != nil {
+		ctx := h.ctx
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		h.recorder.EndSession(ctx, sessionID)
+	}
 	// Send close message then close connections
 	closeMsg := map[string]string{"event": "session_finished", "session_id": sessionID}
 	raw, _ := json.Marshal(closeMsg)
