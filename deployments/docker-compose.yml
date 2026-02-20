@@ -1,10 +1,10 @@
 services:
   app:
     build:
-      context: ..
-      dockerfile: deployments/Dockerfile
+      context: ../..
+      dockerfile: streaming-service/deployments/Dockerfile
     ports:
-      - "8080:8080"
+      - "8090:8090"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432

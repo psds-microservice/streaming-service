@@ -118,6 +118,10 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/psds-microservice/recording-service v0.0.1 h1:R0caJExi9+aA5OCPH+k8hfc1XJu4N+VQVVI58nEFg9U=
+github.com/psds-microservice/recording-service v0.0.1/go.mod h1:21xGF0Yvv4/aMogfYHBqTwm2Y1hn+nAOQVHIduNDKvs=
+github.com/psds-microservice/session-manager-service v0.0.0-20260219152029-b7da62dbc0ea h1:/tQdShMV28q5iXrmCzfDnJKdt3JTsB2Bt2HgIgOAb+8=
+github.com/psds-microservice/session-manager-service v0.0.0-20260219152029-b7da62dbc0ea/go.mod h1:EALU9jL6xhfz1MpKqhyxb4CfCItrNOd7Iqb12qDavW4=
 github.com/quic-go/qpack v0.6.0 h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=
 github.com/quic-go/qpack v0.6.0/go.mod h1:lUpLKChi8njB4ty2bFLX2x4gzDqXwUpaO1DP9qMDZII=
 github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SAw=

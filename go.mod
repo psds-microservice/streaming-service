@@ -9,18 +9,13 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.11.2
-	github.com/psds-microservice/recording-service v0.0.0
-	github.com/psds-microservice/session-manager-service v0.0.0
+	github.com/psds-microservice/recording-service v0.0.1
+	github.com/psds-microservice/session-manager-service v0.0.0-20260219152029-b7da62dbc0ea
 	github.com/spf13/cobra v1.10.2
 	go.uber.org/zap v1.27.1
 	google.golang.org/grpc v1.79.1
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
-)
-
-replace (
-	github.com/psds-microservice/recording-service => ../recording-service
-	github.com/psds-microservice/session-manager-service => ../session-manager-service
 )
 
 require (
