@@ -23,6 +23,7 @@ type SessionServicer interface {
 	Finish(sessionID string) error
 	AddOperator(sessionID, userID string) error
 	GetOperators(sessionID string) ([]model.Operator, error)
+	IsClientOrOperator(sessionID, userID string) (bool, error)
 }
 
 // SessionService manages streaming session lifecycle.
@@ -132,6 +133,27 @@ func (s *SessionService) GetOperators(sessionID string) ([]model.Operator, error
 		out = append(out, model.Operator{UserID: o.UserID, ConnectedAt: o.ConnectedAt})
 	}
 	return out, nil
+}
+
+// IsClientOrOperator returns true if userID is the session client or one of its operators.
+func (s *SessionService) IsClientOrOperator(sessionID, userID string) (bool, error) {
+	sess, err := s.Get(sessionID)
+	if err != nil {
+		return false, err
+	}
+	if sess.ClientID == userID {
+		return true, nil
+	}
+	ops, err := s.GetOperators(sessionID)
+	if err != nil {
+		return false, err
+	}
+	for _, o := range ops {
+		if o.UserID == userID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func entityToSession(ent *model.StreamingSession) *model.Session {

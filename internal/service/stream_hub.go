@@ -146,9 +146,9 @@ func (h *StreamHub) RelayToOperators(sessionID string, messageType int, data []b
 		}
 	}
 	if h.recorder != nil && len(data) > 0 {
-		ctx := h.ctx
-		if ctx == nil {
-			ctx = context.Background()
+		ctx := context.Background()
+		if h.ctx != nil {
+			ctx = h.ctx
 		}
 		h.recorder.WriteChunk(ctx, sessionID, data)
 	}
@@ -166,9 +166,9 @@ func (h *StreamHub) CloseSession(sessionID string) {
 	h.mu.Unlock()
 
 	if h.recorder != nil {
-		ctx := h.ctx
-		if ctx == nil {
-			ctx = context.Background()
+		ctx := context.Background()
+		if h.ctx != nil {
+			ctx = h.ctx
 		}
 		h.recorder.EndSession(ctx, sessionID)
 	}

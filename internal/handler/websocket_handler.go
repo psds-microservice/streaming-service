@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/psds-microservice/streaming-service/internal/model"
 	"github.com/psds-microservice/streaming-service/internal/service"
@@ -30,6 +31,14 @@ func (h *StreamWSHandler) ServeWS(c *gin.Context) {
 	userID := c.Param("user_id")
 	if sessionID == "" || userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session_id and user_id required"})
+		return
+	}
+	if _, err := uuid.Parse(sessionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id: must be a valid UUID"})
+		return
+	}
+	if _, err := uuid.Parse(userID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id: must be a valid UUID"})
 		return
 	}
 

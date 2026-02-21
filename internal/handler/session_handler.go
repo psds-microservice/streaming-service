@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/psds-microservice/streaming-service/internal/errs"
 	"github.com/psds-microservice/streaming-service/internal/model"
 	"github.com/psds-microservice/streaming-service/internal/service"
@@ -59,7 +60,29 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session_id required"})
 		return
 	}
-	err := h.svc.Finish(sessionID)
+	if _, err := uuid.Parse(sessionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id: must be a valid UUID"})
+		return
+	}
+	callerID := c.GetHeader("X-User-ID")
+	if callerID == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "X-User-ID header required"})
+		return
+	}
+	ok, err := h.svc.IsClientOrOperator(sessionID, callerID)
+	if err != nil {
+		if errors.Is(err, errs.ErrSessionNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check permission"})
+		return
+	}
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "caller is not the session client or an operator"})
+		return
+	}
+	err = h.svc.Finish(sessionID)
 	if err != nil {
 		if errors.Is(err, errs.ErrSessionNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
@@ -77,6 +100,28 @@ func (h *SessionHandler) GetSessionOperators(c *gin.Context) {
 	sessionID := c.Param("id")
 	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session_id required"})
+		return
+	}
+	if _, err := uuid.Parse(sessionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id: must be a valid UUID"})
+		return
+	}
+	callerID := c.GetHeader("X-User-ID")
+	if callerID == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "X-User-ID header required"})
+		return
+	}
+	ok, err := h.svc.IsClientOrOperator(sessionID, callerID)
+	if err != nil {
+		if errors.Is(err, errs.ErrSessionNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check permission"})
+		return
+	}
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "caller is not the session client or an operator"})
 		return
 	}
 	operators, err := h.svc.GetOperators(sessionID)

@@ -14,14 +14,12 @@ import (
 	"github.com/psds-microservice/streaming-service/internal/router"
 	"github.com/psds-microservice/streaming-service/internal/service"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 // API is the HTTP + WebSocket API application.
 type API struct {
 	cfg      *config.Config
 	srv      *http.Server
-	db       *gorm.DB
 	recorder *recording.Client
 	hub      *service.StreamHub
 }
@@ -73,7 +71,7 @@ func NewAPI(cfg *config.Config) (*API, error) {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	return &API{cfg: cfg, srv: srv, db: db, recorder: recClient, hub: hub}, nil
+	return &API{cfg: cfg, srv: srv, recorder: recClient, hub: hub}, nil
 }
 
 // Run starts the HTTP server and blocks until ctx is cancelled; then shuts down gracefully.
