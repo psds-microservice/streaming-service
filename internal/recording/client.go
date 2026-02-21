@@ -74,11 +74,13 @@ func (c *Client) Close() error {
 }
 
 // WriteChunk sends a chunk to recording-service for the given session (opens stream on first chunk).
+// Lock is held for the whole lookup/create and Send to avoid races with Close() and concurrent Send on the same stream.
 func (c *Client) WriteChunk(ctx context.Context, sessionID string, data []byte) {
 	if c.recConn == nil {
 		return
 	}
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	st, ok := c.streams[sessionID]
 	if !ok {
 		recClient := recording_service.NewRecordingServiceClient(c.recConn)
@@ -86,22 +88,19 @@ func (c *Client) WriteChunk(ctx context.Context, sessionID string, data []byte) 
 		st, err = recClient.IngestStream(ctx)
 		if err != nil {
 			c.log.Warn("recording: start stream failed", zap.String("session_id", sessionID), zap.Error(err))
-			c.mu.Unlock()
 			return
 		}
 		c.streams[sessionID] = st
 	}
-	c.mu.Unlock()
 	chunk := &recording_service.StreamChunk{SessionId: sessionID, Data: data, Last: false}
 	if err := st.Send(chunk); err != nil {
 		c.log.Warn("recording: send chunk failed", zap.String("session_id", sessionID), zap.Error(err))
-		c.mu.Lock()
 		delete(c.streams, sessionID)
-		c.mu.Unlock()
 	}
 }
 
 // EndSession sends last chunk, closes stream, gets URL, and sets it in session-manager.
+// Lock is held until stream is removed and final Send/CloseAndRecv are done so Close() cannot close connections meanwhile.
 func (c *Client) EndSession(ctx context.Context, sessionID string) {
 	if c.recConn == nil {
 		return
@@ -113,10 +112,10 @@ func (c *Client) EndSession(ctx context.Context, sessionID string) {
 		return
 	}
 	delete(c.streams, sessionID)
-	c.mu.Unlock()
-
 	_ = st.Send(&recording_service.StreamChunk{SessionId: sessionID, Last: true})
 	res, err := st.CloseAndRecv()
+	c.mu.Unlock()
+
 	if err != nil {
 		c.log.Warn("recording: close and recv failed", zap.String("session_id", sessionID), zap.Error(err))
 		return
