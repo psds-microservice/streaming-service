@@ -24,6 +24,7 @@ type Peer struct {
 	Role      PeerRole
 	Conn      *websocket.Conn
 	Send      chan []byte
+	sendOnce  sync.Once
 }
 
 // StreamRecorder receives a copy of the client stream for recording (optional).
@@ -103,6 +104,8 @@ func (h *StreamHub) Register(sessionID, userID string, role PeerRole, conn *webs
 	return p, cleanup
 }
 
+func (p *Peer) closeSend() { p.sendOnce.Do(func() { close(p.Send) }) }
+
 func (h *StreamHub) unregister(sessionID string, p *Peer) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -112,7 +115,7 @@ func (h *StreamHub) unregister(sessionID string, p *Peer) {
 			delete(h.peers, sessionID)
 		}
 	}
-	close(p.Send)
+	p.closeSend()
 	h.log.Info("peer unregistered",
 		zap.String("session_id", sessionID),
 		zap.String("user_id", p.UserID))
@@ -174,7 +177,7 @@ func (h *StreamHub) CloseSession(sessionID string) {
 	raw, _ := json.Marshal(closeMsg)
 	for p := range m {
 		_ = p.Conn.WriteMessage(websocket.TextMessage, raw)
-		close(p.Send)
+		p.closeSend()
 		_ = p.Conn.Close()
 	}
 	h.log.Info("session closed", zap.String("session_id", sessionID))
