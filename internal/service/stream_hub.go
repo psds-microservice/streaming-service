@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -52,7 +53,18 @@ type StreamHub struct {
 }
 
 // SetRecorder sets the optional recorder for copying client stream to recording-service.
-func (h *StreamHub) SetRecorder(r StreamRecorder) { h.recorder = r }
+// If r is an interface holding a nil pointer (e.g. var c *Client; SetRecorder(c)),
+// the field is set to nil to avoid nil-interface panic on use.
+func (h *StreamHub) SetRecorder(r StreamRecorder) {
+	if r != nil {
+		v := reflect.ValueOf(r)
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			h.recorder = nil
+			return
+		}
+	}
+	h.recorder = r
+}
 
 // SetContext sets the app context for recording (for shutdown propagation).
 func (h *StreamHub) SetContext(ctx context.Context) { h.ctx = ctx }
