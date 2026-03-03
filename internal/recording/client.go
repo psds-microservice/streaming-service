@@ -39,18 +39,21 @@ func NewClient(recordingAddr, sessionManagerAddr string, log *zap.Logger) *Clien
 }
 
 // Connect establishes gRPC connections to recording-service and session-manager.
+// Must be called before WriteChunk/EndSession; connection fields are guarded by c.mu.
 func (c *Client) Connect(ctx context.Context) error {
 	recConn, err := grpc.NewClient(c.recordingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
-	c.recConn = recConn
 	sessConn, err := grpc.NewClient(c.sessionAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		_ = recConn.Close()
 		return err
 	}
+	c.mu.Lock()
+	c.recConn = recConn
 	c.sessConn = sessConn
+	c.mu.Unlock()
 	return nil
 }
 
@@ -76,11 +79,11 @@ func (c *Client) Close() error {
 // WriteChunk sends a chunk to recording-service for the given session (opens stream on first chunk).
 // Lock is held for the whole lookup/create and Send to avoid races with Close() and concurrent Send on the same stream.
 func (c *Client) WriteChunk(ctx context.Context, sessionID string, data []byte) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.recConn == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	st, ok := c.streams[sessionID]
 	if !ok {
 		recClient := recording_service.NewRecordingServiceClient(c.recConn)
@@ -102,10 +105,11 @@ func (c *Client) WriteChunk(ctx context.Context, sessionID string, data []byte) 
 // EndSession sends last chunk, closes stream, gets URL, and sets it in session-manager.
 // Lock is held until stream is removed and final Send/CloseAndRecv are done so Close() cannot close connections meanwhile.
 func (c *Client) EndSession(ctx context.Context, sessionID string) {
+	c.mu.Lock()
 	if c.recConn == nil {
+		c.mu.Unlock()
 		return
 	}
-	c.mu.Lock()
 	st, ok := c.streams[sessionID]
 	if !ok {
 		c.mu.Unlock()
